@@ -7,31 +7,6 @@
   <link href="default.css" rel="stylesheet" type="text/css">
   <script type="module" src="firebaseauth.js"></script>
 </head>
- <style> 
-  #open-tab {
-      position: fixed;
-      margin: 0px;
-      top: 0px;
-      left: 0px;
-      background: #3e64ff;
-      color: white;
-      border: none;
-      padding: 15px;
-      cursor: pointer;
-    }
-  
-  
-    #close-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      position: absolute;
-      top: 10px;
-      right: 15px;
-    }
- </style>
 <body>
 
   <div id="sidebar" class="sidebar">
@@ -44,8 +19,19 @@
     </ul>
   </div>
 
+  
 
   <button class="open-tab" onclick="toggleSidebar()">☰</button>
+
+  <header>
+    <nav id="nav-links">
+        <ul>
+            <li> <a href="signin.html" id="SignUp" style="color: black;"> Sign Up </a> </li>
+            <li> <a href="#trivia" class="skip" style="color: black;"> Login </a> </li>
+            <li> <a href="#contact" class="skip" style="color: black;"> Logout </a> </li>
+        </ul>
+    </nav>
+</header>
 
   <h1>🎧 Song Scout</h1>
   <input id="trackInput" type="text" placeholder="Enter a song or artist name..."><ul id="suggestions" style="background: #f1f1f1; padding: 0.5rem; display: none;"></ul>
