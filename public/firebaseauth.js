@@ -29,10 +29,10 @@
   const signUp=document.getElementById('submitSignUp');
   signUp.addEventListener('click', (event)=>{
      event.preventDefault();
+     const username=document.getElementById('rUsername').value;
      const email=document.getElementById('rEmail').value;
      const password=document.getElementById('rPassword').value;
-     const username=document.getElementById('rUsername').value;
- 
+
      const auth=getAuth();
      const db=getFirestore();
  
@@ -42,6 +42,7 @@
          const userData={
              email: email,
              username: username,
+             password: password,
          };
          showMessage('Account Created Successfully', 'signUpMessage');
          const docRef=doc(db, "users", user.uid);

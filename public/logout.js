@@ -28,7 +28,6 @@ const firebaseConfig = {
             if(docSnap.exists()){
                 const userData=docSnap.data();
                 document.getElementById('loggedUsername').innerText=userData.username;
-                document.getElementById('loggedUserEmail').innerText=userData.email;
             }
             else{
                 console.log("no document found matching id")

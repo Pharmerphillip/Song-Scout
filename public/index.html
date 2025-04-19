@@ -6,13 +6,22 @@
   <title>🎵 SongScout</title>
   <link href="default.css" rel="stylesheet" type="text/css">
   <script type="module" src="firebaseauth.js"></script>
-  <script type="module" src="./logout.js"></script>
+  <script type="module" src="logout.js"></script>
 </head>
 <body>
   <header> 
-  <!-- App Title -->
-  <h1>🎧 Song Scout</h1>
-  </header> 
+  <!-- HEADER -->
+  <div class="header-bar">
+    <h1>🎧 Song Scout</h1>
+    <div class="account-actions">
+      <span id="welcomeText">👋 Welcome, Guest</span>
+      <div>
+        <button onclick="signIn()">Sign In</button>
+        <button onclick="signUp()">Sign Up</button>
+        <button onclick="logout()" id="logoutBtn" style="display: none;">Logout</button>
+      </div>
+    </div>
+  </div>
 
   <!-- Account Page -->
   <div id="accountPage" class="page-section">
@@ -21,7 +30,7 @@
           <ul>
               <li> <a href="signup.html" style="color: black;"> Sign Up </a> </li>
               <li> <a href="signin.html" style="color: black;"> Login </a> </li>
-              <li> <a href="#contact"  style="color: black;"> Logout </a> </li>
+              <li id="logout"> <a href="#contact" style="color: black;"> Logout </a> </li>
           </ul>
       </nav>
       <div> Username: <span id="loggedUsername"></span></div>
