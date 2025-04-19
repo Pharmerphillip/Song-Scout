@@ -6,44 +6,69 @@
   <title>🎵 SongScout</title>
   <link href="default.css" rel="stylesheet" type="text/css">
   <script type="module" src="firebaseauth.js"></script>
+  <script type="module" src="./logout.js"></script>
 </head>
 <body>
+  <header> 
+  <!-- App Title -->
+  <h1>🎧 Song Scout</h1>
+  </header> 
 
+  <!-- Account Page -->
+  <div id="accountPage" class="page-section">
+    <h2>👤 Account</h2>
+      <nav id="nav-links">
+          <ul>
+              <li> <a href="signup.html" style="color: black;"> Sign Up </a> </li>
+              <li> <a href="signin.html" style="color: black;"> Login </a> </li>
+              <li> <a href="#contact"  style="color: black;"> Logout </a> </li>
+          </ul>
+      </nav>
+      <div> Username: <span id="loggedUsername"></span></div>
+  </div>
+
+  <!-- Sidebar -->
   <div id="sidebar" class="sidebar">
     <button class="close-btn" onclick="toggleSidebar()">✖</button>
     <h3>Menu</h3>
     <ul>
-      <li onclick="navigateTo('Home')">🏠 Home</li>
-      <li onclick="navigateTo('Favorites')">⭐ Favorites</li>
-      <li onclick="navigateTo('Account')">👤 Account</li>
+      <li onclick="navigateTo('home')">🏠 Home</li>
+      <li onclick="navigateTo('account')">👤 Account</li>
+      <li onclick="navigateTo('favorites')">⭐ Favorites</li>
+      <li onclick="navigateTo('reviews')">📝 Reviews</li>
+      
     </ul>
   </div>
 
-  
-
   <button class="open-tab" onclick="toggleSidebar()">☰</button>
 
-  <header>
-    <nav id="nav-links">
-        <ul>
-            <li> <a href="signup.html" id="SignUp" style="color: black;"> Sign Up </a> </li>
-            <li> <a href="signin.html" class="skip" style="color: black;"> Login </a> </li>
-            <li> <a href="#contact" class="skip" style="color: black;"> Logout </a> </li>
-        </ul>
-    </nav>
-</header>
+  <!-- Home Page -->
+  <div id="homePage" class="page-section active">
+    <input id="trackInput" type="text" placeholder="Enter a song or artist name...">
+    <ul id="suggestions" style="background: #f1f1f1; padding: 0.5rem; display: none;"></ul>
+    <button onclick="searchTrack()">Search</button>
 
-  <h1>🎧 Song Scout</h1>
-  <input id="trackInput" type="text" placeholder="Enter a song or artist name..."><ul id="suggestions" style="background: #f1f1f1; padding: 0.5rem; display: none;"></ul>
-  <button onclick="searchTrack()">Search</button>
+    <h3>Search History</h3>
+    <ul id="searchHistory"></ul>
+
+    <div id="results"></div>
+  </div>
   
-  <h3>Search History</h3>
-  <ul id="searchHistory"></ul>
+  <!-- Favorites Page -->
+  <div id="favoritesPage" class="page-section">
+    <h2>⭐ Favorites</h2>
+    <div id="favoritesResults"></div>
+  </div>
 
-  <div id="results"></div>
-  
+  <!-- Reviews Page -->
+  <div id="reviewsPage" class="page-section">
+    <h2>📝 Reviews</h2>
+    <div id="allReviewsContainer">
+      <p>No reviews yet.</p>
+    </div>
+  </div>
 
-
+  <!-- Mini Audio Player -->
   <div id="miniPlayer" style="position: fixed; bottom: 20px; right: 20px; background: #3e64ff; color: white; padding: 10px; border-radius: 10px; display: none;">
     <span id="currentSong">🎶 Now Playing</span><br>
     <audio id="audioPlayer" controls style="width: 250px;"></audio>
@@ -146,7 +171,7 @@
     reviewTextArea.value = ''; // Clear the textarea
     }
 
-    function toggleReviews(trackId) {
+  function toggleReviews(trackId) {
         const reviewBox = document.getElementById(`reviews-${trackId}`);
         
         if (reviewBox.style.display === 'none') {
@@ -157,16 +182,21 @@
         }
     }
 
-    function renderReviews(trackId) {
-        const reviewBox = document.getElementById(`reviews-${trackId}`);
-        const trackReviews = reviews[trackId] || [];
+  function renderAllReviews() {
+    const container = document.getElementById('allReviewsContainer');
+    let html = '';
 
-        if (trackReviews.length === 0) {
-            reviewBox.innerHTML = '<p>No reviews yet.</p>';
-        } else {
-            reviewBox.innerHTML = trackReviews.map(r => `<p style="margin: 0.3rem 0;">🗣️ ${r}</p>`).join('');
-        }
-    }
+    for (const [trackId, trackReviews] of Object.entries(reviews)) {
+      if (trackReviews.length === 0) continue;
+
+      html += `<div style="margin-bottom: 1rem;">
+        <h4>🎵 Reviews for Track ID: ${trackId}</h4>
+        ${trackReviews.map(r => `<p>🗣️ ${r}</p>`).join('')}
+        </div>`;
+    } 
+    container.innerHTML = html || '<p>No reviews found yet.</p>';
+  }
+
 
     let searchHistory = [];
 
@@ -259,7 +289,7 @@
 }
 
 
-    // ... (Implement other functionalities: categorization, posts, comments, likes/dislikes, etc.)
+    // ... (Implement other functionalities: categorization, posts, comments, likes/dislikes, etc)
 
     // Function to toggle the sidebar
     function toggleSidebar() {
