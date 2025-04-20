@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 firebase-debug.log*
 firebase-debug.*.log*
+./public/firebaseConfig.js
+public/apikey.js
 
 # Firebase cache
 .firebase/
@@ -67,3 +69,4 @@ node_modules/
 
 # dataconnect generated files
 .dataconnect
+
