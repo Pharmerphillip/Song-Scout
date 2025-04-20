@@ -13,12 +13,17 @@
   <!-- HEADER -->
   <div class="header">
     <h1>🎧 Song Scout</h1>
+    <div class="account-actions">
+      <a href="signin.html"><button>Sign In</button></a>
+      <a href="signup.html"><button>Sign Up</button></a>
+        <button onclick="logout()" id="logoutBtn" style="display: none;">Logout</button>
+    </div>
   </div>
 
   <!-- Account Page -->
   <div id="accountPage" class="page-section">
     <h2>👤 Account</h2>
-      <nav id="nav-links">
+      <nav>
           <ul>
               <li> <a href="signup.html" style="color: black;"> Sign Up </a> </li>
               <li id="logout"> <a href="index.html" style="color: black;"> Logout </a> </li>
@@ -150,26 +155,31 @@
 
     const reviews = {}; // key: trackId, value: array of reviews
 
-    function submitReview(trackId, buttonElement) {
-        const reviewTextArea = buttonElement.previousElementSibling;
-        const review = reviewTextArea.value.trim();
-        if (!review) return alert('Please write something!');
+  function submitReview(trackId, buttonElement) {
+    const reviewTextArea = buttonElement.previousElementSibling;
+    const review = reviewTextArea.value.trim();
+    if (!review) return alert('Please write something!');
 
-        if (!reviews[trackId]) reviews[trackId] = [];
-        reviews[trackId].push(review);
+    const track = trackMap[trackId];
+    if (!track) return alert('Track info missing.');
 
-        reviewTextArea.value = '';
-        alert(`Review submitted!`);
+    const reviewEntry = {
+      trackId: trackId,
+      trackTitle: track.title,
+      artist: track.subtitle,
+      reviewText: review,
+      timestamp: Date.now()
+    };
 
-        // Save reviews if needed: localStorage.setItem('reviews', JSON.stringify(reviews));
-    
+    if (!reviews[trackId]) reviews[trackId] = [];
+      reviews[trackId].unshift(reviewEntry); 
 
-    // For demo purposes, we'll just show an alert.
-    // In a real app, you'd store this in a database or display it dynamically.
-    alert(`Review for track ${trackId} submitted:\n\n"${review}"`);
+    reviewTextArea.value = '';
+    alert(`Review submitted for "${track.title}"!`);
 
-    reviewTextArea.value = ''; // Clear the textarea
-    }
+    saveReviews();
+    renderAllReviews();  
+}
 
   function toggleReviews(trackId) {
         const reviewBox = document.getElementById(`reviews-${trackId}`);
@@ -180,23 +190,45 @@
         } else {
             reviewBox.style.display = 'none';
         }
-    }
+  }
+
 
   function renderAllReviews() {
     const container = document.getElementById('allReviewsContainer');
-    let html = '';
+    let allEntries = [];
 
-    for (const [trackId, trackReviews] of Object.entries(reviews)) {
-      if (trackReviews.length === 0) continue;
+    for (const trackId in reviews) {
+      allEntries = allEntries.concat(reviews[trackId]);
+    }
 
-      html += `<div style="margin-bottom: 1rem;">
-        <h4>🎵 Reviews for Track ID: ${trackId}</h4>
-        ${trackReviews.map(r => `<p>🗣️ ${r}</p>`).join('')}
-        </div>`;
-    } 
-    container.innerHTML = html || '<p>No reviews found yet.</p>';
+    if (allEntries.length === 0) {
+      container.innerHTML = '<p>No reviews yet.</p>';
+      return;
+    }
+
+    // Sort by newest
+    allEntries.sort((a, b) => b.timestamp - a.timestamp);
+
+    const html = allEntries.map(entry => `
+      <div style="margin-bottom: 1rem; padding: 10px; border-bottom: 1px solid #ccc;">
+        <strong>🎵 ${entry.trackTitle}</strong> <em>by ${entry.artist}</em>
+        <p>🗣️ ${entry.reviewText}</p>
+        <small>🕒 ${new Date(entry.timestamp).toLocaleString()}</small>
+      </div>
+    `).join('');
+
+    container.innerHTML = html;
   }
 
+  function saveReviews() {
+    localStorage.setItem('songScoutReviews', JSON.stringify(reviews));
+  }
+
+  // Load on page load
+  function loadReviews() {
+    const stored = localStorage.getItem('songScoutReviews');
+    if (stored) Object.assign(reviews, JSON.parse(stored));
+  }
 
     let searchHistory = [];
 
@@ -292,20 +324,30 @@
     // ... (Implement other functionalities: categorization, posts, comments, likes/dislikes, etc)
 
     // Function to toggle the sidebar
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.style.left = (sidebar.style.left === '0px') ? '-220px' : '0px';
-    }
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.style.left = (sidebar.style.left === '0px') ? '-220px' : '0px';
+  }
 
-    function navigateTo(section) {
-        toggleSidebar();
-        
-        if (section === 'favorites') {
-            renderFavorites();
-        } else {
-            alert(`Navigating to: ${section}`);
-        }
+  function navigateTo(section) {
+    toggleSidebar();
+
+    // Hide all sections
+    document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+
+    // Show the selected section
+    if (section === 'favorites') {
+      renderFavorites();
+      document.getElementById('favoritesPage').classList.add('active');
+    } else if (section === 'reviews') {
+      renderAllReviews(); 
+      document.getElementById('reviewsPage').classList.add('active');
+    } else if (section === 'account') {
+      document.getElementById('accountPage').classList.add('active');
+    } else {
+      document.getElementById('homePage').classList.add('active');
     }
+  }
 
     document.getElementById('trackInput').addEventListener('input', function() {
     const input = this.value.toLowerCase();
@@ -382,9 +424,12 @@
     }
     });
 
-    // Call this after tracks are rendered
-    document.addEventListener("DOMContentLoaded", loadRatings);
-
+  document.addEventListener("DOMContentLoaded", () => {
+    loadReviews();      // Load review data from localStorage
+    loadRatings();      // Load ratings from localStorage
+    renderAllReviews(); // Pre-render all reviews to reviewsPage
+  });
+  
     // After rendering all tracks:
     loadRatings();
 
