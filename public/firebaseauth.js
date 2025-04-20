@@ -9,10 +9,10 @@
     projectId: "songscout-3c222",
     storageBucket: "songscout-3c222.firebasestorage.app",
     messagingSenderId: "318654746581",
-    appId: "1:318654746581:web:a54b51cd8b3bdff131775c",
-    measurementId: "G-CF8QFV8RNZ"
+    appId: "1:318654746581:web:337e3cab1714ae6231775c",
+    measurementId: "G-68P7WRHJG7"
   };
-
+  
   // Initialize Firebase
   const app = initializeApp(firebaseConfig);
 
