@@ -268,56 +268,79 @@
     // Example: User Content Management (adapt to your specific requirements)
     let userContent = []; // Store user-created content (favorites, posts, etc.)
 
-    function addFavorite(trackId) {
-        const track = trackMap[trackId];
+function saveFavorites() {
+  localStorage.setItem('songScoutFavorites', JSON.stringify(userContent));
+}
 
-        if (!track) {
-            alert("Track info not found!");
-            return;
-        }
+function loadFavorites() {
+  const stored = localStorage.getItem('songScoutFavorites');
 
-        if (!userContent.some(t => t.key === trackId)) {
-            userContent.push(track);
-            alert(`"${track.title}" added to favorites!`);
-        } else {
-            alert('Track already in favorites.');
-        }
+  if (stored) {
+    userContent = JSON.parse(stored);
+  }
+}
+
+function addFavorite(trackId) {
+    const track = trackMap[trackId];
+    if (!track) {
+        alert("Track info not found!");
+        return;
     }
 
-    function removeFavorite(trackId) {
-        const index = userContent.findIndex(track => track.key === trackId);
-        if (index !== -1) {
-            userContent.splice(index, 1);
-            alert('Track removed from favorites!');
-            renderFavorites(); // Refresh the view
-        } else {
-            alert('Track not found in favorites.');
-        }
+    if (!userContent.some(t => t.key === trackId)) {
+        userContent.push(track);
+        alert(`"${track.title}" added to favorites!`);
+        saveFavorites();
+        renderFavorites(); // Refresh the view
+    } else {
+        alert('Track already in favorites.');
     }
+}
 
-    function renderFavorites() {
-        const resultsDiv = document.getElementById('results');
-        if (userContent.length === 0) {
-            resultsDiv.innerHTML = '<p>No favorites yet.</p>';
-            return;
+
+ function removeFavorite(trackId) {
+  const index = userContent.findIndex(track => track.key === trackId);
+  if (index !== -1) {
+    userContent.splice(index, 1);
+    alert('Track removed from favorites!');
+    saveFavorites();
+    renderFavorites(); // Refresh both
+  } else {
+    alert('Track not found in favorites.');
+  }
+}
+
+function renderFavorites() {
+  const resultsDiv = document.getElementById('results');
+  const favDiv = document.getElementById('favoritesResults');
+
+  const targetDivs = [resultsDiv, favDiv];
+
+  targetDivs.forEach(div => {
+    if (div) {
+      if (userContent.length === 0) {
+        div.innerHTML = '<p>No favorites yet.</p>';
+        return;
+      }
+
+      let html = '';
+            userContent.forEach(track => {
+                html += `
+                    <div class="track-card">
+                        <img src="${track.images?.coverart || 'https://via.placeholder.com/120'}" alt="${track.title}" />
+                        <div class="track-info">
+                            <h2>${track.title}</h2>
+                            <p><strong>Artist:</strong> ${track.subtitle}</p>
+                            ${track.hub?.actions?.[1]?.uri ? `<button onclick="playPreview('${track.title}', '${track.hub.actions[1].uri}')">▶️ Play Preview</button>` : '<p>No preview available.</p>'}
+                            <button onclick="removeFavorite('${track.key}')">🗑️ Remove from Favorites</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            div.innerHTML = html;
         }
-
-        let html = '<h2>⭐ Favorites</h2>';
-        userContent.forEach(track => {
-            html += `
-            <div class="track-card">
-                <img src="${track.images?.coverart || 'https://via.placeholder.com/120'}" alt="${track.title}" />
-                <div class="track-info">
-                <h2>${track.title}</h2>
-                <p><strong>Artist:</strong> ${track.subtitle}</p>
-                ${track.hub?.actions?.[1]?.uri ? `<button onclick="playPreview('${track.title}', '${track.hub.actions[1].uri}')">▶️ Play Preview</button>` : '<p>No preview available.</p>'}
-                <button onclick="removeFavorite('${track.key}')">🗑️ Remove from Favorites</button>
-                </div>
-            </div>
-            `;
-        });
-
-        resultsDiv.innerHTML = html;
+    });
 }
 
 
@@ -424,11 +447,13 @@
     }
     });
 
-  document.addEventListener("DOMContentLoaded", () => {
-    loadReviews();      // Load review data from localStorage
-    loadRatings();      // Load ratings from localStorage
-    renderAllReviews(); // Pre-render all reviews to reviewsPage
-  });
+    document.addEventListener("DOMContentLoaded", () => {
+    loadReviews();      // Load reviews
+    loadRatings();      // Load ratings
+    loadFavorites();    // Load favorites
+    renderFavorites();  // Display them on load (in case user navigates right to Favorites)
+    renderAllReviews(); // Show reviews
+});
   
     // After rendering all tracks:
     loadRatings();
