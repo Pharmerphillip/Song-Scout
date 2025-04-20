@@ -4,60 +4,76 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>🎵 SongScout</title>
-  <link href="default.css" rel="stylesheet" type="text/css">
+  <link href="testing.css" rel="stylesheet" type="text/css">
   <script type="module" src="firebaseauth.js"></script>
+  <script type="module" src="logout.js"></script>
 </head>
- <style> 
-  #open-tab {
-      position: fixed;
-      margin: 0px;
-      top: 0px;
-      left: 0px;
-      background: #3e64ff;
-      color: white;
-      border: none;
-      padding: 15px;
-      cursor: pointer;
-    }
-  
-  
-    #close-btn {
-      background: none;
-      border: none;
-      color: white;
-      font-size: 1.5rem;
-      cursor: pointer;
-      position: absolute;
-      top: 10px;
-      right: 15px;
-    }
- </style>
 <body>
+  <header> 
+  <!-- HEADER -->
+  <div class="header">
+    <h1>🎧 Song Scout</h1>
+    <div class="account-actions">
+      <a href="signin.html"><button>Sign In</button></a>
+      <a href="signup.html"><button>Sign Up</button></a>
+        <button onclick="logout()" id="logoutBtn" style="display: none;">Logout</button>
+    </div>
+  </div>
 
+  <!-- Account Page -->
+  <div id="accountPage" class="page-section">
+    <h2>👤 Accouhhnt</h2>
+      <nav>
+          <ul>
+              <li> <a href="signup.html" style="color: black;"> Sign Up </a> </li>
+              <li id="logout"> <a href="index.html" style="color: black;"> Logout </a> </li>
+          </ul>
+      </nav>
+      <div> Username: <span id="loggedUsername"></span></div>
+  </div>
+
+  <!-- Sidebar -->
   <div id="sidebar" class="sidebar">
     <button class="close-btn" onclick="toggleSidebar()">✖</button>
     <h3>Menu</h3>
     <ul>
-      <li onclick="navigateTo('Home')">🏠 Home</li>
-      <li onclick="navigateTo('Favorites')">⭐ Favorites</li>
-      <li onclick="navigateTo('Account')">👤 Account</li>
+      <li onclick="navigateTo('home')">🏠 Home</li>
+      <li onclick="navigateTo('account')">👤 Account</li>
+      <li onclick="navigateTo('favorites')">⭐ Favorites</li>
+      <li onclick="navigateTo('reviews')">📝 Reviews</li>
+      
     </ul>
   </div>
 
-
   <button class="open-tab" onclick="toggleSidebar()">☰</button>
 
-  <h1>🎧 Song Scout</h1>
-  <input id="trackInput" type="text" placeholder="Enter a song or artist name..."><ul id="suggestions" style="background: #f1f1f1; padding: 0.5rem; display: none;"></ul>
-  <button onclick="searchTrack()">Search</button>
+  <!-- Home Page -->
+  <div id="homePage" class="page-section active">
+    <input id="trackInput" type="text" placeholder="Enter a song or artist name...">
+    <ul id="suggestions" style="background: #f1f1f1; padding: 0.5rem; display: none;"></ul>
+    <button onclick="searchTrack()">Search</button>
+
+    <h3>Search History</h3>
+    <ul id="searchHistory"></ul>
+
+    <div id="results"></div>
+  </div>
   
-  <h3>Search History</h3>
-  <ul id="searchHistory"></ul>
+  <!-- Favorites Page -->
+  <div id="favoritesPage" class="page-section">
+    <h2>⭐ Favorites</h2>
+    <div id="favoritesResults"></div>
+  </div>
 
-  <div id="results"></div>
-  
+  <!-- Reviews Page -->
+  <div id="reviewsPage" class="page-section">
+    <h2>📝 Reviews</h2>
+    <div id="allReviewsContainer">
+      <p>No reviews yet.</p>
+    </div>
+  </div>
 
-
+  <!-- Mini Audio Player -->
   <div id="miniPlayer" style="position: fixed; bottom: 20px; right: 20px; background: #3e64ff; color: white; padding: 10px; border-radius: 10px; display: none;">
     <span id="currentSong">🎶 Now Playing</span><br>
     <audio id="audioPlayer" controls style="width: 250px;"></audio>
@@ -139,28 +155,33 @@
 
     const reviews = {}; // key: trackId, value: array of reviews
 
-    function submitReview(trackId, buttonElement) {
-        const reviewTextArea = buttonElement.previousElementSibling;
-        const review = reviewTextArea.value.trim();
-        if (!review) return alert('Please write something!');
+  function submitReview(trackId, buttonElement) {
+    const reviewTextArea = buttonElement.previousElementSibling;
+    const review = reviewTextArea.value.trim();
+    if (!review) return alert('Please write something!');
 
-        if (!reviews[trackId]) reviews[trackId] = [];
-        reviews[trackId].push(review);
+    const track = trackMap[trackId];
+    if (!track) return alert('Track info missing.');
 
-        reviewTextArea.value = '';
-        alert(`Review submitted!`);
+    const reviewEntry = {
+      trackId: trackId,
+      trackTitle: track.title,
+      artist: track.subtitle,
+      reviewText: review,
+      timestamp: Date.now()
+    };
 
-        // Save reviews if needed: localStorage.setItem('reviews', JSON.stringify(reviews));
-    
+    if (!reviews[trackId]) reviews[trackId] = [];
+      reviews[trackId].unshift(reviewEntry); 
 
-    // For demo purposes, we'll just show an alert.
-    // In a real app, you'd store this in a database or display it dynamically.
-    alert(`Review for track ${trackId} submitted:\n\n"${review}"`);
+    reviewTextArea.value = '';
+    alert(`Review submitted for "${track.title}"!`);
 
-    reviewTextArea.value = ''; // Clear the textarea
-    }
+    saveReviews();
+    renderAllReviews();  
+}
 
-    function toggleReviews(trackId) {
+  function toggleReviews(trackId) {
         const reviewBox = document.getElementById(`reviews-${trackId}`);
         
         if (reviewBox.style.display === 'none') {
@@ -169,18 +190,45 @@
         } else {
             reviewBox.style.display = 'none';
         }
+  }
+
+
+  function renderAllReviews() {
+    const container = document.getElementById('allReviewsContainer');
+    let allEntries = [];
+
+    for (const trackId in reviews) {
+      allEntries = allEntries.concat(reviews[trackId]);
     }
 
-    function renderReviews(trackId) {
-        const reviewBox = document.getElementById(`reviews-${trackId}`);
-        const trackReviews = reviews[trackId] || [];
-
-        if (trackReviews.length === 0) {
-            reviewBox.innerHTML = '<p>No reviews yet.</p>';
-        } else {
-            reviewBox.innerHTML = trackReviews.map(r => `<p style="margin: 0.3rem 0;">🗣️ ${r}</p>`).join('');
-        }
+    if (allEntries.length === 0) {
+      container.innerHTML = '<p>No reviews yet.</p>';
+      return;
     }
+
+    // Sort by newest
+    allEntries.sort((a, b) => b.timestamp - a.timestamp);
+
+    const html = allEntries.map(entry => `
+      <div style="margin-bottom: 1rem; padding: 10px; border-bottom: 1px solid #ccc;">
+        <strong>🎵 ${entry.trackTitle}</strong> <em>by ${entry.artist}</em>
+        <p>🗣️ ${entry.reviewText}</p>
+        <small>🕒 ${new Date(entry.timestamp).toLocaleString()}</small>
+      </div>
+    `).join('');
+
+    container.innerHTML = html;
+  }
+
+  function saveReviews() {
+    localStorage.setItem('songScoutReviews', JSON.stringify(reviews));
+  }
+
+  // Load on page load
+  function loadReviews() {
+    const stored = localStorage.getItem('songScoutReviews');
+    if (stored) Object.assign(reviews, JSON.parse(stored));
+  }
 
     let searchHistory = [];
 
@@ -220,76 +268,109 @@
     // Example: User Content Management (adapt to your specific requirements)
     let userContent = []; // Store user-created content (favorites, posts, etc.)
 
-    function addFavorite(trackId) {
-        const track = trackMap[trackId];
+function saveFavorites() {
+  localStorage.setItem('songScoutFavorites', JSON.stringify(userContent));
+}
 
-        if (!track) {
-            alert("Track info not found!");
-            return;
-        }
+function loadFavorites() {
+  const stored = localStorage.getItem('songScoutFavorites');
 
-        if (!userContent.some(t => t.key === trackId)) {
-            userContent.push(track);
-            alert(`"${track.title}" added to favorites!`);
-        } else {
-            alert('Track already in favorites.');
-        }
+  if (stored) {
+    userContent = JSON.parse(stored);
+  }
+}
+
+function addFavorite(trackId) {
+    const track = trackMap[trackId];
+    if (!track) {
+        alert("Track info not found!");
+        return;
     }
 
-    function removeFavorite(trackId) {
-        const index = userContent.findIndex(track => track.key === trackId);
-        if (index !== -1) {
-            userContent.splice(index, 1);
-            alert('Track removed from favorites!');
-            renderFavorites(); // Refresh the view
-        } else {
-            alert('Track not found in favorites.');
-        }
+    if (!userContent.some(t => t.key === trackId)) {
+        userContent.push(track);
+        alert(`"${track.title}" added to favorites!`);
+        saveFavorites();
+        renderFavorites(); // Refresh the view
+    } else {
+        alert('Track already in favorites.');
     }
-
-    function renderFavorites() {
-        const resultsDiv = document.getElementById('results');
-        if (userContent.length === 0) {
-            resultsDiv.innerHTML = '<p>No favorites yet.</p>';
-            return;
-        }
-
-        let html = '<h2>⭐ Favorites</h2>';
-        userContent.forEach(track => {
-            html += `
-            <div class="track-card">
-                <img src="${track.images?.coverart || 'https://via.placeholder.com/120'}" alt="${track.title}" />
-                <div class="track-info">
-                <h2>${track.title}</h2>
-                <p><strong>Artist:</strong> ${track.subtitle}</p>
-                ${track.hub?.actions?.[1]?.uri ? `<button onclick="playPreview('${track.title}', '${track.hub.actions[1].uri}')">▶️ Play Preview</button>` : '<p>No preview available.</p>'}
-                <button onclick="removeFavorite('${track.key}')">🗑️ Remove from Favorites</button>
-                </div>
-            </div>
-            `;
-        });
-
-        resultsDiv.innerHTML = html;
 }
 
 
-    // ... (Implement other functionalities: categorization, posts, comments, likes/dislikes, etc.)
+ function removeFavorite(trackId) {
+  const index = userContent.findIndex(track => track.key === trackId);
+  if (index !== -1) {
+    userContent.splice(index, 1);
+    alert('Track removed from favorites!');
+    saveFavorites();
+    renderFavorites(); // Refresh both
+  } else {
+    alert('Track not found in favorites.');
+  }
+}
+
+function renderFavorites() {
+  const resultsDiv = document.getElementById('results');
+  const favDiv = document.getElementById('favoritesResults');
+
+  const targetDivs = [resultsDiv, favDiv];
+
+  targetDivs.forEach(div => {
+    if (div) {
+      if (userContent.length === 0) {
+        div.innerHTML = '<p>No favorites yet.</p>';
+        return;
+      }
+
+      let html = '';
+            userContent.forEach(track => {
+                html += `
+                    <div class="track-card">
+                        <img src="${track.images?.coverart || 'https://via.placeholder.com/120'}" alt="${track.title}" />
+                        <div class="track-info">
+                            <h2>${track.title}</h2>
+                            <p><strong>Artist:</strong> ${track.subtitle}</p>
+                            ${track.hub?.actions?.[1]?.uri ? `<button onclick="playPreview('${track.title}', '${track.hub.actions[1].uri}')">▶️ Play Preview</button>` : '<p>No preview available.</p>'}
+                            <button onclick="removeFavorite('${track.key}')">🗑️ Remove from Favorites</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            div.innerHTML = html;
+        }
+    });
+}
+
+
+    // ... (Implement other functionalities: categorization, posts, comments, likes/dislikes, etc)
 
     // Function to toggle the sidebar
-    function toggleSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.style.left = (sidebar.style.left === '0px') ? '-220px' : '0px';
-    }
+  function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    sidebar.style.left = (sidebar.style.left === '0px') ? '-220px' : '0px';
+  }
 
-    function navigateTo(section) {
-        toggleSidebar();
-        
-        if (section === 'favorites') {
-            renderFavorites();
-        } else {
-            alert(`Navigating to: ${section}`);
-        }
+  function navigateTo(section) {
+    toggleSidebar();
+
+    // Hide all sections
+    document.querySelectorAll('.page-section').forEach(sec => sec.classList.remove('active'));
+
+    // Show the selected section
+    if (section === 'favorites') {
+      renderFavorites();
+      document.getElementById('favoritesPage').classList.add('active');
+    } else if (section === 'reviews') {
+      renderAllReviews(); 
+      document.getElementById('reviewsPage').classList.add('active');
+    } else if (section === 'account') {
+      document.getElementById('accountPage').classList.add('active');
+    } else {
+      document.getElementById('homePage').classList.add('active');
     }
+  }
 
     document.getElementById('trackInput').addEventListener('input', function() {
     const input = this.value.toLowerCase();
@@ -366,9 +447,14 @@
     }
     });
 
-    // Call this after tracks are rendered
-    document.addEventListener("DOMContentLoaded", loadRatings);
-
+    document.addEventListener("DOMContentLoaded", () => {
+    loadReviews();      // Load reviews
+    loadRatings();      // Load ratings
+    loadFavorites();    // Load favorites
+    renderFavorites();  // Display them on load (in case user navigates right to Favorites)
+    renderAllReviews(); // Show reviews
+});
+  
     // After rendering all tracks:
     loadRatings();
 
