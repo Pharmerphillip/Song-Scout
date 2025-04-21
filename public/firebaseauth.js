@@ -9,8 +9,8 @@
     projectId: "songscout-3c222",
     storageBucket: "songscout-3c222.firebasestorage.app",
     messagingSenderId: "318654746581",
-    appId: "1:318654746581:web:337e3cab1714ae6231775c",
-    measurementId: "G-68P7WRHJG7"
+    appId: "1:318654746581:web:ee86c0fba43b255131775c",
+    measurementId: "G-D7QTRQPPV6"
   };
   
   // Initialize Firebase
