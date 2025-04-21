@@ -122,8 +122,18 @@
 
     <!-- Audio Player (Preview) -->
     <div id="miniPlayer" style="display:none;">
-        <span>Current Song</span>
-        <audio id="audioPlayer" controls></audio>
+        <div class="player-header">
+            <span id="currentSong">Now Playing: </span>
+            <button onclick="togglePlaybackSpeed()" class="speed-control">
+                Speed: <span id="speedIndicator">1x</span>
+            </button>
+        </div>
+        <audio id="audioPlayer" controls style="width: 100%; margin-top: 1rem;"></audio>
+        <div class="player-controls">
+            <button onclick="downloadTrack()" class="download-btn">
+                <i class="fas fa-download"></i> Download
+            </button>
+        </div>
     </div>
 
     <!-- Authentication Modal -->
@@ -250,12 +260,47 @@
         function playPreview(title, url) {
             const player = document.getElementById('audioPlayer');
             const display = document.getElementById('miniPlayer');
-            const currentSong = display.querySelector('span');
+            const currentSong = document.getElementById('currentSong');
             
-            currentSong.textContent = title;
+            currentSong.textContent = `Now Playing: ${title}`;
             player.src = url;
+            player.playbackRate = 1; // Reset speed on new track
+            document.getElementById('speedIndicator').textContent = '1x';
             player.play();
             display.style.display = 'block';
+            
+            // Store current track info for download
+            state.currentTrack = { title, url };
+        }
+
+        // Playback speed control
+        let playbackSpeeds = [0.5, 1.0, 1.5, 2.0];
+        let currentSpeedIndex = 1;
+
+        function togglePlaybackSpeed() {
+            currentSpeedIndex = (currentSpeedIndex + 1) % playbackSpeeds.length;
+            const newSpeed = playbackSpeeds[currentSpeedIndex];
+            const player = document.getElementById('audioPlayer');
+            player.playbackRate = newSpeed;
+            document.getElementById('speedIndicator').textContent = `${newSpeed}x`;
+        }
+
+        // Download functionality
+        function downloadTrack() {
+            if (!state.currentTrack) return;
+            
+            try {
+                const track = state.currentTrack;
+                const fileName = `${track.title.replace(/[^a-z0-9]/gi, '_')}.mp3`;
+                const link = document.createElement('a');
+                link.href = track.url;
+                link.download = fileName;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            } catch (error) {
+                showNotification('Download failed: ' + error.message);
+            }
         }
 
         // Star Rating System
